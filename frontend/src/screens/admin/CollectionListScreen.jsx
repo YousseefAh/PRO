@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LinkContainer } from 'react-router-bootstrap';
 import { Table, Button, Row, Col, Form, Modal, Badge, Tabs, Tab } from 'react-bootstrap';
-import { FaEdit, FaPlus, FaTrash, FaEye, FaChevronRight } from 'react-icons/fa';
+import { FaEdit, FaPlus, FaTrash, FaEye, FaChevronRight, FaLock } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
@@ -21,6 +21,12 @@ const CollectionListScreen = () => {
     // For create collection modal
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [parentCollectionId, setParentCollectionId] = useState('');
+    const [collectionName, setCollectionName] = useState('');
+    const [collectionDescription, setCollectionDescription] = useState('');
+    const [collectionImage, setCollectionImage] = useState('/images/sample.jpg');
+    const [collectionIsActive, setCollectionIsActive] = useState(true);
+    const [requiresCode, setRequiresCode] = useState(false);
+    const [accessCode, setAccessCode] = useState('');
 
     // For viewing collections
     const [selectedRootCollection, setSelectedRootCollection] = useState(null);
@@ -41,10 +47,32 @@ const CollectionListScreen = () => {
         }
     }, [activeTab]);
 
+    // Reset form fields when modal is closed
+    useEffect(() => {
+        if (!showCreateModal) {
+            resetFormFields();
+        }
+    }, [showCreateModal]);
+
+    const resetFormFields = () => {
+        setCollectionName('');
+        setCollectionDescription('');
+        setCollectionImage('/images/sample.jpg');
+        setCollectionIsActive(true);
+        setRequiresCode(false);
+        setAccessCode('');
+    };
+
     const createCollectionHandler = async () => {
         try {
             await createCollection({
-                parentCollectionId: parentCollectionId || null
+                parentCollectionId: parentCollectionId || null,
+                name: collectionName,
+                description: collectionDescription,
+                image: collectionImage,
+                isActive: collectionIsActive,
+                requiresCode,
+                accessCode: requiresCode ? accessCode : ''
             }).unwrap();
             refetch();
             toast.success('Collection created');
@@ -109,6 +137,7 @@ const CollectionListScreen = () => {
                                     <th>DESCRIPTION</th>
                                     <th>SUB-COLLECTIONS</th>
                                     <th>PRODUCTS</th>
+                                    <th>ACCESS</th>
                                     <th>ACTIONS</th>
                                 </tr>
                             </thead>
@@ -136,6 +165,16 @@ const CollectionListScreen = () => {
                                             <Badge bg={collection.products.length > 0 ? "success" : "secondary"} pill>
                                                 {collection.products.length}
                                             </Badge>
+                                        </td>
+                                        <td>
+                                            {collection.requiresCode ? (
+                                                <span className="text-danger">
+                                                    <FaLock className="me-1" />
+                                                    Private
+                                                </span>
+                                            ) : (
+                                                <span className="text-success">Public</span>
+                                            )}
                                         </td>
                                         <td>
                                             <Button
@@ -188,6 +227,7 @@ const CollectionListScreen = () => {
                                                     <th>NAME</th>
                                                     <th>DESCRIPTION</th>
                                                     <th>PRODUCTS</th>
+                                                    <th>ACCESS</th>
                                                     <th>ACTIONS</th>
                                                 </tr>
                                             </thead>
@@ -207,6 +247,16 @@ const CollectionListScreen = () => {
                                                             <Badge bg={collection.products.length > 0 ? "success" : "secondary"} pill>
                                                                 {collection.products.length}
                                                             </Badge>
+                                                        </td>
+                                                        <td>
+                                                            {collection.requiresCode ? (
+                                                                <span className="text-danger">
+                                                                    <FaLock className="me-1" />
+                                                                    Private
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-success">Public</span>
+                                                            )}
                                                         </td>
                                                         <td>
                                                             <LinkContainer to={`/admin/collection/${collection._id}/edit`}>
@@ -244,7 +294,7 @@ const CollectionListScreen = () => {
             </Tabs>
 
             {/* Create Collection Modal */}
-            <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)}>
+            <Modal show={showCreateModal} onHide={() => setShowCreateModal(false)} size="lg">
                 <Modal.Header closeButton>
                     <Modal.Title>
                         {parentCollectionId ? 'Create Sub-Collection' : 'Create Root Collection'}
@@ -252,7 +302,7 @@ const CollectionListScreen = () => {
                 </Modal.Header>
                 <Modal.Body>
                     <Form>
-                        <Form.Group controlId='parentCollection'>
+                        <Form.Group controlId='parentCollection' className="mb-3">
                             <Form.Label>Parent Collection</Form.Label>
                             <Form.Control
                                 as='select'
@@ -267,10 +317,83 @@ const CollectionListScreen = () => {
                                 ))}
                             </Form.Control>
                         </Form.Group>
+
+                        <Form.Group controlId='name' className="mb-3">
+                            <Form.Label>Collection Name</Form.Label>
+                            <Form.Control
+                                type='text'
+                                placeholder='Enter collection name'
+                                value={collectionName}
+                                onChange={(e) => setCollectionName(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+
+                        <Form.Group controlId='description' className="mb-3">
+                            <Form.Label>Description</Form.Label>
+                            <Form.Control
+                                as='textarea'
+                                rows={3}
+                                placeholder='Enter collection description'
+                                value={collectionDescription}
+                                onChange={(e) => setCollectionDescription(e.target.value)}
+                                required
+                            />
+                        </Form.Group>
+
+                        <Form.Group controlId='image' className="mb-3">
+                            <Form.Label>Image URL</Form.Label>
+                            <Form.Control
+                                type='text'
+                                placeholder='Enter image URL (e.g. /images/sample.jpg)'
+                                value={collectionImage}
+                                onChange={(e) => setCollectionImage(e.target.value)}
+                                required
+                            />
+                            <Form.Text className="text-muted">
+                                You can modify the image after creation
+                            </Form.Text>
+                        </Form.Group>
+
+                        <Form.Group controlId='isActive' className="mb-3">
+                            <Form.Check
+                                type='checkbox'
+                                label='Active (visible to users)'
+                                checked={collectionIsActive}
+                                onChange={(e) => setCollectionIsActive(e.target.checked)}
+                            />
+                        </Form.Group>
+
+                        <hr className="my-3" />
+                        <h5>Access Protection</h5>
+                        <Form.Group controlId='requiresCode' className="mb-3">
+                            <Form.Check
+                                type='checkbox'
+                                label='Require access code'
+                                checked={requiresCode}
+                                onChange={(e) => setRequiresCode(e.target.checked)}
+                            />
+                            <Form.Text className="text-muted">
+                                If enabled, users will need to enter a code to view this collection
+                            </Form.Text>
+                        </Form.Group>
+
+                        {requiresCode && (
+                            <Form.Group controlId='accessCode' className="mb-3">
+                                <Form.Label>Access Code</Form.Label>
+                                <Form.Control
+                                    type='text'
+                                    placeholder='Enter access code'
+                                    value={accessCode}
+                                    onChange={(e) => setAccessCode(e.target.value)}
+                                    required={requiresCode}
+                                />
+                                <Form.Text className="text-muted">
+                                    Share this code with users who should have access
+                                </Form.Text>
+                            </Form.Group>
+                        )}
                     </Form>
-                    <p className="mt-3">
-                        You can edit the collection details after creation.
-                    </p>
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant='secondary' onClick={() => setShowCreateModal(false)}>
@@ -279,7 +402,7 @@ const CollectionListScreen = () => {
                     <Button
                         variant='primary'
                         onClick={createCollectionHandler}
-                        disabled={isCreating}
+                        disabled={isCreating || !collectionName || !collectionDescription || !collectionImage || (requiresCode && !accessCode)}
                     >
                         {isCreating ? 'Creating...' : 'Create Collection'}
                     </Button>

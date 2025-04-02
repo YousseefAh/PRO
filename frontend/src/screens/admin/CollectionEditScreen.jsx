@@ -54,7 +54,7 @@ const CollectionEditScreen = () => {
             setImage(collection.image);
             setIsActive(collection.isActive);
             setParentCollection(collection.parentCollection || '');
-            
+
             // Load access code settings
             setRequiresCode(collection.requiresCode || false);
             setAccessCode(collection.accessCode || '');
@@ -278,7 +278,7 @@ const CollectionEditScreen = () => {
                                         </Form.Text>
                                     </Form.Group>
                                 )}
-                                
+
                                 <Button
                                     type='submit'
                                     variant='primary'

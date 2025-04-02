@@ -24,7 +24,7 @@ const HomeScreen = () => {
         <>
             <Meta title="ProShop | Home" description="Explore our collections" />
 
-            {!keyword && <ProductCarousel />}
+            {/* {!keyword && <ProductCarousel />} */}
 
             {collectionsLoading ? (
                 <Loader />

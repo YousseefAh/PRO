@@ -25,19 +25,28 @@ const CollectionScreen = () => {
 
     // Check if collection requires code access
     useEffect(() => {
-        if (collection && collection.requiresCode) {
+        if (collection) {
+            checkCollectionAccess(collection);
+        }
+    }, [collection, collectionId]);
+
+    const checkCollectionAccess = (collection) => {
+        if (collection.requiresCode) {
             const hasAccess = localStorage.getItem(`collection_access_${collectionId}`);
             if (hasAccess === 'granted') {
                 setAccessGranted(true);
             } else {
                 setShowCodeModal(true);
+                setAccessGranted(false);
             }
+        } else {
+            setAccessGranted(true);
         }
-    }, [collection, collectionId]);
+    };
 
     const handleCodeSubmit = (e) => {
         e.preventDefault();
-        
+
         if (collection && accessCode === collection.accessCode) {
             setAccessGranted(true);
             setShowCodeModal(false);
@@ -47,6 +56,31 @@ const CollectionScreen = () => {
         } else {
             setCodeError(true);
         }
+    };
+
+    // Custom wrapper for CollectionCard to ensure access codes are checked for subcollections
+    const SecureCollectionCard = ({ collection: subCollection }) => {
+        // Determine if this subcollection requires a code that hasn't been granted yet
+        const needsAccessCode = subCollection.requiresCode &&
+            !localStorage.getItem(`collection_access_${subCollection._id}`);
+
+        const handleSubCollectionClick = (e) => {
+            if (needsAccessCode) {
+                e.preventDefault();
+                // Save the intended destination, then navigate
+                localStorage.setItem('intended_collection', subCollection._id);
+                navigate(`/collections/${subCollection._id}`);
+            }
+        };
+
+        return (
+            <div onClick={handleSubCollectionClick} style={{ cursor: needsAccessCode ? 'pointer' : 'default' }}>
+                <CollectionCard
+                    collection={subCollection}
+                    lockedAccess={needsAccessCode}
+                />
+            </div>
+        );
     };
 
     return (
@@ -97,14 +131,14 @@ const CollectionScreen = () => {
             ) : (
                 <>
                     <Meta title={collection.name} />
-                    
+
                     {/* Breadcrumb navigation */}
                     {collection.parentCollection && (
                         <Breadcrumb className="mb-3">
                             <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/home" }}>Home</Breadcrumb.Item>
                             {collection.parentCollection && (
-                                <Breadcrumb.Item 
-                                    linkAs={Link} 
+                                <Breadcrumb.Item
+                                    linkAs={Link}
                                     linkProps={{ to: `/collections/${collection.parentCollection._id}` }}
                                 >
                                     {collection.parentCollection.name}
@@ -113,7 +147,7 @@ const CollectionScreen = () => {
                             <Breadcrumb.Item active>{collection.name}</Breadcrumb.Item>
                         </Breadcrumb>
                     )}
-                    
+
                     <Row className="mb-4">
                         <Col md={6}>
                             <Card>
@@ -143,7 +177,7 @@ const CollectionScreen = () => {
                             <Row>
                                 {collection.subCollections.map((subCollection) => (
                                     <Col key={subCollection._id} sm={12} md={6} lg={4} xl={3}>
-                                        <CollectionCard collection={subCollection} />
+                                        <SecureCollectionCard collection={subCollection} />
                                     </Col>
                                 ))}
                             </Row>
@@ -154,8 +188,8 @@ const CollectionScreen = () => {
                     <h2 className="mt-4">Products</h2>
                     {collection.products && collection.products.length === 0 ? (
                         <Message variant="info">
-                            {collection.subCollections && collection.subCollections.length > 0 ? 
-                                "This collection doesn't have products directly. Please browse the categories above to see products." : 
+                            {collection.subCollections && collection.subCollections.length > 0 ?
+                                "This collection doesn't have products directly. Please browse the categories above to see products." :
                                 "No products in this collection"
                             }
                         </Message>

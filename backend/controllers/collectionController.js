@@ -35,11 +35,11 @@ const getCollectionById = asyncHandler(async (req, res) => {
     // Sort products by displayOrder
     collection.products.sort((a, b) => a.displayOrder - b.displayOrder);
 
-    // Get sub-collections
+    // Get sub-collections with protection information
     const subCollections = await Collection.find({
       parentCollection: collection._id,
       isActive: true,
-    }).select('name image description');
+    }).select('name image description requiresCode');
 
     // Return collection with its products and sub-collections
     return res.json({
@@ -73,16 +73,26 @@ const getSubCollections = asyncHandler(async (req, res) => {
 // @route   POST /api/collections
 // @access  Private/Admin
 const createCollection = asyncHandler(async (req, res) => {
-  const { parentCollectionId } = req.body;
+  const {
+    parentCollectionId,
+    name = 'Sample Collection',
+    description = 'Sample description',
+    image = '/images/sample.jpg',
+    requiresCode = false,
+    accessCode = '',
+    isActive = true,
+  } = req.body;
 
   const collection = new Collection({
-    name: 'Sample Collection',
+    name,
     user: req.user._id,
-    image: '/images/sample.jpg',
-    description: 'Sample description',
+    image,
+    description,
     products: [],
     parentCollection: parentCollectionId || null,
-    isActive: true,
+    isActive,
+    requiresCode,
+    accessCode,
   });
 
   const createdCollection = await collection.save();
@@ -93,7 +103,15 @@ const createCollection = asyncHandler(async (req, res) => {
 // @route   PUT /api/collections/:id
 // @access  Private/Admin
 const updateCollection = asyncHandler(async (req, res) => {
-  const { name, image, description, parentCollection, isActive } = req.body;
+  const {
+    name,
+    image,
+    description,
+    parentCollection,
+    isActive,
+    requiresCode,
+    accessCode,
+  } = req.body;
 
   const collection = await Collection.findById(req.params.id);
 
@@ -111,6 +129,10 @@ const updateCollection = asyncHandler(async (req, res) => {
       parentCollection || collection.parentCollection;
     collection.isActive =
       isActive !== undefined ? isActive : collection.isActive;
+    collection.requiresCode =
+      requiresCode !== undefined ? requiresCode : collection.requiresCode;
+    collection.accessCode =
+      accessCode !== undefined ? accessCode : collection.accessCode;
 
     const updatedCollection = await collection.save();
     res.json(updatedCollection);
