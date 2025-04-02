@@ -8,56 +8,63 @@ import Message from '../components/Message';
 import Paginate from '../components/Paginate';
 import ProductCarousel from '../components/ProductCarousel';
 import Meta from '../components/Meta';
+import { useGetCollectionsQuery } from '../slices/collectionsApiSlice';
+import CollectionCard from '../components/CollectionCard';
 
 const HomeScreen = () => {
     const { pageNumber, keyword } = useParams();
 
-    const { data, isLoading, error } = useGetProductsQuery({
-        keyword,
+    const { data: collectionsData, isLoading: collectionsLoading, error: collectionsError } = useGetCollectionsQuery();
+    const { data: productsData, isLoading: productsLoading } = useGetProductsQuery({
         pageNumber,
+        keyword
     });
 
     return (
         <>
-            <Meta title="ProShop | Home" description="Latest products at the best prices" />
+            <Meta title="ProShop | Home" description="Explore our collections" />
 
-            {!keyword ? (
-                <ProductCarousel />
-            ) : (
-                <Link to='/' className='btn btn-light mb-4'>
-                    Go Back
-                </Link>
-            )}
+            {!keyword && <ProductCarousel />}
 
-            {isLoading ? (
+            {collectionsLoading ? (
                 <Loader />
-            ) : error ? (
+            ) : collectionsError ? (
                 <Message variant='danger'>
-                    {error?.data?.message || error.error}
+                    {collectionsError?.data?.message || collectionsError.error}
                 </Message>
-            ) : (
-                <div id="products-section" className="container py-5">
-                    <div className="section-header text-center mb-5">
-                        <h2 className="fw-bold">Latest Products</h2>
-                        <div className="divider mx-auto my-3" style={{ width: '80px', height: '3px', backgroundColor: '#593196' }}></div>
-                        <p className="text-muted">Explore our newest arrivals</p>
+            ) : collectionsData && collectionsData.length > 0 ? (
+                <>
+                    <div id="collections-section" className="container py-5">
+                        <div className="section-header text-center mb-5">
+                            <h2 className="fw-bold">Product Collections</h2>
+                            <div className="divider mx-auto my-3" style={{ width: '80px', height: '3px', backgroundColor: '#593196' }}></div>
+                            <p className="text-muted">Browse our curated collections</p>
+                        </div>
+
+                        <Row className="g-4">
+                            {collectionsData.map((collection) => (
+                                <Col key={collection._id} sm={12} md={6} lg={4} xl={3}>
+                                    <CollectionCard collection={collection} />
+                                </Col>
+                            ))}
+                        </Row>
                     </div>
 
-                    <Row className="g-4">
-                        {data.products.map((product) => (
-                            <Col key={product._id} sm={12} md={6} lg={4} xl={3}>
-                                <Product product={product} />
-                            </Col>
-                        ))}
-                    </Row>
-                    <div className="mt-5 d-flex justify-content-center">
-                        <Paginate
-                            pages={data.pages}
-                            page={data.page}
-                            keyword={keyword ? keyword : ''}
-                        />
-                    </div>
-                </div>
+                    {!keyword && productsData && !productsLoading && (
+                        <div className="latest-products py-5">
+                            <h2 className="text-center mb-4">Latest Products</h2>
+                            <Row>
+                                {productsData.products.slice(0, 4).map((product) => (
+                                    <Col key={product._id} sm={12} md={6} lg={4} xl={3}>
+                                        <Product product={product} />
+                                    </Col>
+                                ))}
+                            </Row>
+                        </div>
+                    )}
+                </>
+            ) : (
+                <Message>No collections found</Message>
             )}
         </>
     );

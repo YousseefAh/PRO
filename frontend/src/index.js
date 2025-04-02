@@ -33,6 +33,9 @@ import ProductListScreen from './screens/admin/ProductListScreen';
 import ProductEditScreen from './screens/admin/ProductEditScreen';
 import UserListScreen from './screens/admin/UserListScreen';
 import UserEditScreen from './screens/admin/UserEditScreen';
+import CollectionScreen from './screens/CollectionScreen';
+import CollectionListScreen from './screens/admin/CollectionListScreen';
+import CollectionEditScreen from './screens/admin/CollectionEditScreen';
 import store from './store';
 import { Provider } from 'react-redux';
 import { PayPalScriptProvider } from '@paypal/react-paypal-js';
@@ -61,6 +64,7 @@ const router = createBrowserRouter(
           />
           <Route path='/product/:id' element={<ProductScreen />} />
           <Route path='/cart' element={<CartScreen />} />
+          <Route path='/collections/:id' element={<CollectionScreen />} />
 
           {/* Already protected routes for registered users */}
           <Route path='' element={<PrivateRoute />}>
@@ -85,6 +89,14 @@ const router = createBrowserRouter(
               element={<ProductEditScreen />}
             />
             <Route path='/admin/user/:id/edit' element={<UserEditScreen />} />
+            <Route
+              path='/admin/collectionlist'
+              element={<CollectionListScreen />}
+            />
+            <Route
+              path='/admin/collection/:id/edit'
+              element={<CollectionEditScreen />}
+            />
           </Route>
         </Route>
       </Route>
