@@ -32,9 +32,32 @@ const CollectionScreen = () => {
 
     const checkCollectionAccess = (collection) => {
         if (collection.requiresCode) {
-            const hasAccess = localStorage.getItem(`collection_access_${collectionId}`);
-            if (hasAccess === 'granted') {
-                setAccessGranted(true);
+            const accessData = localStorage.getItem(`collection_access_${collectionId}`);
+
+            if (accessData) {
+                try {
+                    // Parse the stored data which includes code timestamp
+                    const { granted, timestamp } = JSON.parse(accessData);
+
+                    // Compare timestamps - if code was updated after access was granted, invalidate
+                    const storedTimestamp = new Date(timestamp).getTime();
+                    const codeUpdatedTimestamp = new Date(collection.codeUpdatedAt).getTime();
+
+                    if (granted === true && storedTimestamp >= codeUpdatedTimestamp) {
+                        setAccessGranted(true);
+                    } else {
+                        // Access code was changed after this access was granted
+                        setShowCodeModal(true);
+                        setAccessGranted(false);
+                        // Clear invalid access data
+                        localStorage.removeItem(`collection_access_${collectionId}`);
+                    }
+                } catch (error) {
+                    // If there's any error parsing, invalidate access
+                    setShowCodeModal(true);
+                    setAccessGranted(false);
+                    localStorage.removeItem(`collection_access_${collectionId}`);
+                }
             } else {
                 setShowCodeModal(true);
                 setAccessGranted(false);
@@ -51,8 +74,14 @@ const CollectionScreen = () => {
             setAccessGranted(true);
             setShowCodeModal(false);
             setCodeError(false);
-            // Store access for this session
-            localStorage.setItem(`collection_access_${collectionId}`, 'granted');
+
+            // Store access with timestamp information
+            const accessData = {
+                granted: true,
+                timestamp: new Date().toISOString(), // Store current time as the access grant time
+                codeVersion: collection.codeUpdatedAt // Store code version for comparison
+            };
+            localStorage.setItem(`collection_access_${collectionId}`, JSON.stringify(accessData));
         } else {
             setCodeError(true);
         }

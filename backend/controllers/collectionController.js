@@ -129,10 +129,15 @@ const updateCollection = asyncHandler(async (req, res) => {
       parentCollection || collection.parentCollection;
     collection.isActive =
       isActive !== undefined ? isActive : collection.isActive;
+
+    // Check if access code is being changed
+    if (accessCode !== undefined && accessCode !== collection.accessCode) {
+      collection.accessCode = accessCode;
+      collection.codeUpdatedAt = new Date(); // Update the timestamp when code changes
+    }
+
     collection.requiresCode =
       requiresCode !== undefined ? requiresCode : collection.requiresCode;
-    collection.accessCode =
-      accessCode !== undefined ? accessCode : collection.accessCode;
 
     const updatedCollection = await collection.save();
     res.json(updatedCollection);

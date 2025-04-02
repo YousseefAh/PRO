@@ -21,6 +21,31 @@ const userSchema = mongoose.Schema(
       required: true,
       default: false,
     },
+    // New user profile fields
+    age: {
+      type: Number,
+      default: null,
+    },
+    fitnessGoal: {
+      type: String,
+      enum: [
+        'gain weight',
+        'lose weight',
+        'build muscle',
+        'get lean',
+        'maintain',
+        'other',
+      ],
+      default: null,
+    },
+    injuries: {
+      type: String,
+      default: '',
+    },
+    additionalInfo: {
+      type: String,
+      default: '',
+    },
   },
   {
     timestamps: true,

@@ -27,6 +27,10 @@ const collectionSchema = mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    codeUpdatedAt: {
+      type: Date,
+      default: Date.now,
+    },
     products: [
       {
         product: {

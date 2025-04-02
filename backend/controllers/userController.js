@@ -18,6 +18,10 @@ const authUser = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      age: user.age,
+      fitnessGoal: user.fitnessGoal,
+      injuries: user.injuries,
+      additionalInfo: user.additionalInfo,
     });
   } else {
     res.status(401);
@@ -29,7 +33,8 @@ const authUser = asyncHandler(async (req, res) => {
 // @route   POST /api/users
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password } = req.body;
+  const { name, email, password, age, fitnessGoal, injuries, additionalInfo } =
+    req.body;
 
   const userExists = await User.findOne({ email });
 
@@ -42,6 +47,10 @@ const registerUser = asyncHandler(async (req, res) => {
     name,
     email,
     password,
+    age: age || null,
+    fitnessGoal: fitnessGoal || null,
+    injuries: injuries || '',
+    additionalInfo: additionalInfo || '',
   });
 
   if (user) {
@@ -52,6 +61,10 @@ const registerUser = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      age: user.age,
+      fitnessGoal: user.fitnessGoal,
+      injuries: user.injuries,
+      additionalInfo: user.additionalInfo,
     });
   } else {
     res.status(400);
@@ -79,6 +92,10 @@ const getUserProfile = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       isAdmin: user.isAdmin,
+      age: user.age,
+      fitnessGoal: user.fitnessGoal,
+      injuries: user.injuries,
+      additionalInfo: user.additionalInfo,
     });
   } else {
     res.status(404);
@@ -100,6 +117,14 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       user.password = req.body.password;
     }
 
+    // Update new profile fields if provided
+    if (req.body.age !== undefined) user.age = req.body.age;
+    if (req.body.fitnessGoal !== undefined)
+      user.fitnessGoal = req.body.fitnessGoal;
+    if (req.body.injuries !== undefined) user.injuries = req.body.injuries;
+    if (req.body.additionalInfo !== undefined)
+      user.additionalInfo = req.body.additionalInfo;
+
     const updatedUser = await user.save();
 
     res.json({
@@ -107,6 +132,10 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       isAdmin: updatedUser.isAdmin,
+      age: updatedUser.age,
+      fitnessGoal: updatedUser.fitnessGoal,
+      injuries: updatedUser.injuries,
+      additionalInfo: updatedUser.additionalInfo,
     });
   } else {
     res.status(404);
