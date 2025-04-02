@@ -28,6 +28,8 @@ const CollectionEditScreen = () => {
     const [parentCollection, setParentCollection] = useState('');
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [productOrders, setProductOrders] = useState([]);
+    const [requiresCode, setRequiresCode] = useState(false);
+    const [accessCode, setAccessCode] = useState('');
 
     const {
         data: collection,
@@ -52,6 +54,10 @@ const CollectionEditScreen = () => {
             setImage(collection.image);
             setIsActive(collection.isActive);
             setParentCollection(collection.parentCollection || '');
+            
+            // Load access code settings
+            setRequiresCode(collection.requiresCode || false);
+            setAccessCode(collection.accessCode || '');
 
             // Set selected products
             if (collection.products) {
@@ -75,7 +81,9 @@ const CollectionEditScreen = () => {
                 description,
                 image,
                 isActive,
-                parentCollection: parentCollection || null
+                parentCollection: parentCollection || null,
+                requiresCode,
+                accessCode: requiresCode ? accessCode : ''
             }).unwrap();
             toast.success('Collection updated');
             refetch();
@@ -241,11 +249,41 @@ const CollectionEditScreen = () => {
                                     />
                                 </Form.Group>
 
+                                <hr className="my-3" />
+                                <h4>Access Protection</h4>
+                                <Form.Group controlId='requiresCode' className='my-2'>
+                                    <Form.Check
+                                        type='checkbox'
+                                        label='Require access code'
+                                        checked={requiresCode}
+                                        onChange={(e) => setRequiresCode(e.target.checked)}
+                                    />
+                                    <Form.Text className="text-muted">
+                                        If enabled, users will need to enter a code to view this collection
+                                    </Form.Text>
+                                </Form.Group>
+
+                                {requiresCode && (
+                                    <Form.Group controlId='accessCode' className='my-2'>
+                                        <Form.Label>Access Code</Form.Label>
+                                        <Form.Control
+                                            type='text'
+                                            placeholder='Enter access code'
+                                            value={accessCode}
+                                            onChange={(e) => setAccessCode(e.target.value)}
+                                            required={requiresCode}
+                                        />
+                                        <Form.Text className="text-muted">
+                                            Share this code with users who should have access
+                                        </Form.Text>
+                                    </Form.Group>
+                                )}
+                                
                                 <Button
                                     type='submit'
                                     variant='primary'
-                                    className='my-2'
-                                    disabled={isUpdating}
+                                    className='my-3'
+                                    disabled={isUpdating || (requiresCode && !accessCode)}
                                 >
                                     Update Collection
                                 </Button>

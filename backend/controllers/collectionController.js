@@ -20,11 +20,16 @@ const getCollections = asyncHandler(async (req, res) => {
 // @route   GET /api/collections/:id
 // @access  Public
 const getCollectionById = asyncHandler(async (req, res) => {
-  const collection = await Collection.findById(req.params.id).populate({
-    path: 'products.product',
-    select:
-      'name image price brand category rating numReviews countInStock description',
-  });
+  const collection = await Collection.findById(req.params.id)
+    .populate({
+      path: 'products.product',
+      select:
+        'name image price brand category rating numReviews countInStock description',
+    })
+    .populate({
+      path: 'parentCollection',
+      select: 'name image description',
+    });
 
   if (collection) {
     // Sort products by displayOrder

@@ -1,5 +1,6 @@
-import { useParams, Link } from 'react-router-dom';
-import { Row, Col, ListGroup, Card, Button } from 'react-bootstrap';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Row, Col, ListGroup, Card, Button, Breadcrumb, Modal, Form } from 'react-bootstrap';
 import { useGetCollectionDetailsQuery } from '../slices/collectionsApiSlice';
 import Loader from '../components/Loader';
 import Message from '../components/Message';
@@ -9,6 +10,12 @@ import Meta from '../components/Meta';
 
 const CollectionScreen = () => {
     const { id: collectionId } = useParams();
+    const navigate = useNavigate();
+
+    const [showCodeModal, setShowCodeModal] = useState(false);
+    const [accessCode, setAccessCode] = useState('');
+    const [accessGranted, setAccessGranted] = useState(false);
+    const [codeError, setCodeError] = useState(false);
 
     const {
         data: collection,
@@ -16,9 +23,35 @@ const CollectionScreen = () => {
         error
     } = useGetCollectionDetailsQuery(collectionId);
 
+    // Check if collection requires code access
+    useEffect(() => {
+        if (collection && collection.requiresCode) {
+            const hasAccess = localStorage.getItem(`collection_access_${collectionId}`);
+            if (hasAccess === 'granted') {
+                setAccessGranted(true);
+            } else {
+                setShowCodeModal(true);
+            }
+        }
+    }, [collection, collectionId]);
+
+    const handleCodeSubmit = (e) => {
+        e.preventDefault();
+        
+        if (collection && accessCode === collection.accessCode) {
+            setAccessGranted(true);
+            setShowCodeModal(false);
+            setCodeError(false);
+            // Store access for this session
+            localStorage.setItem(`collection_access_${collectionId}`, 'granted');
+        } else {
+            setCodeError(true);
+        }
+    };
+
     return (
         <>
-            <Link className="btn btn-light my-3" to="/">
+            <Link className="btn btn-light my-3" to="/home">
                 Go Back
             </Link>
 
@@ -28,10 +61,60 @@ const CollectionScreen = () => {
                 <Message variant="danger">
                     {error?.data?.message || error.error}
                 </Message>
+            ) : collection.requiresCode && !accessGranted ? (
+                <Modal show={showCodeModal} backdrop="static" keyboard={false}>
+                    <Modal.Header>
+                        <Modal.Title>{collection.name} - Access Required</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        <p>This collection requires an access code to view its contents.</p>
+                        <Form onSubmit={handleCodeSubmit}>
+                            <Form.Group controlId="accessCode" className="mb-3">
+                                <Form.Label>Enter Access Code</Form.Label>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Enter the access code"
+                                    value={accessCode}
+                                    onChange={(e) => setAccessCode(e.target.value)}
+                                    isInvalid={codeError}
+                                    required
+                                />
+                                <Form.Control.Feedback type="invalid">
+                                    Invalid access code
+                                </Form.Control.Feedback>
+                            </Form.Group>
+                            <div className="d-flex justify-content-between">
+                                <Button variant="secondary" onClick={() => navigate('/home')}>
+                                    Go Back
+                                </Button>
+                                <Button variant="primary" type="submit">
+                                    Submit
+                                </Button>
+                            </div>
+                        </Form>
+                    </Modal.Body>
+                </Modal>
             ) : (
                 <>
                     <Meta title={collection.name} />
-                    <Row>
+                    
+                    {/* Breadcrumb navigation */}
+                    {collection.parentCollection && (
+                        <Breadcrumb className="mb-3">
+                            <Breadcrumb.Item linkAs={Link} linkProps={{ to: "/home" }}>Home</Breadcrumb.Item>
+                            {collection.parentCollection && (
+                                <Breadcrumb.Item 
+                                    linkAs={Link} 
+                                    linkProps={{ to: `/collections/${collection.parentCollection._id}` }}
+                                >
+                                    {collection.parentCollection.name}
+                                </Breadcrumb.Item>
+                            )}
+                            <Breadcrumb.Item active>{collection.name}</Breadcrumb.Item>
+                        </Breadcrumb>
+                    )}
+                    
+                    <Row className="mb-4">
                         <Col md={6}>
                             <Card>
                                 <Card.Img
@@ -69,17 +152,25 @@ const CollectionScreen = () => {
 
                     {/* Products in this collection */}
                     <h2 className="mt-4">Products</h2>
-                    {collection.products && collection.products.length === 0 && (
-                        <Message>No products in this collection</Message>
+                    {collection.products && collection.products.length === 0 ? (
+                        <Message variant="info">
+                            {collection.subCollections && collection.subCollections.length > 0 ? 
+                                "This collection doesn't have products directly. Please browse the categories above to see products." : 
+                                "No products in this collection"
+                            }
+                        </Message>
+                    ) : (
+                        <Row>
+                            {collection.products && [...collection.products]
+                                .sort((a, b) => a.displayOrder - b.displayOrder)
+                                .map((item) => (
+                                    <Col key={item.product._id} sm={12} md={6} lg={4} xl={3}>
+                                        <Product product={item.product} />
+                                    </Col>
+                                ))
+                            }
+                        </Row>
                     )}
-
-                    <Row>
-                        {collection.products && collection.products.map((item) => (
-                            <Col key={item.product._id} sm={12} md={6} lg={4} xl={3}>
-                                <Product product={item.product} />
-                            </Col>
-                        ))}
-                    </Row>
                 </>
             )}
         </>

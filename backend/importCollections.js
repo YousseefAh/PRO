@@ -2,8 +2,6 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import colors from 'colors';
 import collections from './data/collections.js';
-import users from './data/users.js';
-import products from './data/products.js';
 import User from './models/userModel.js';
 import Product from './models/productModel.js';
 import Collection from './models/collectionModel.js';
@@ -44,31 +42,21 @@ const importCollections = async () => {
 
     console.log('Creating main collections...'.yellow);
 
-    // Create parent collections
+    // Create root collections (no products at this level)
     for (let i = 0; i < collections.length; i++) {
       const collectionData = collections[i];
       const { subCollections, ...parentCollectionData } = collectionData;
 
-      // Distribute products - each main collection gets some products
-      const startIdx = i * 2; // Simple distribution logic
-      const endIdx = startIdx + 2;
-      const mainCollectionProducts = allProducts
-        .slice(startIdx, endIdx)
-        .map((product, index) => ({
-          product: product._id,
-          displayOrder: index,
-        }));
-
-      // Create the parent collection
+      // Root collections don't have products directly
       const parentCollection = new Collection({
         ...parentCollectionData,
         user: adminUser._id,
-        products: mainCollectionProducts,
+        products: [], // No products at root level
       });
 
       const savedParentCollection = await parentCollection.save();
       console.log(
-        `Created parent collection: ${savedParentCollection.name}`.green
+        `Created root collection: ${savedParentCollection.name}`.green
       );
 
       // Create sub-collections
@@ -80,17 +68,24 @@ const importCollections = async () => {
         for (let j = 0; j < subCollections.length; j++) {
           const subCollectionData = subCollections[j];
 
-          // Distribute different products to sub-collections
-          const subStartIdx = (i + j + 3) % allProducts.length;
-          const subEndIdx = subStartIdx + 2;
+          // Distribute products among sub-collections
+          // Calculate product range based on collection index and sub-collection index
+          const productsPerSubCollection = Math.ceil(
+            allProducts.length / (collections.length * subCollections.length)
+          );
+          const startIdx =
+            (i * subCollections.length + j) * productsPerSubCollection;
+          const endIdx = startIdx + productsPerSubCollection;
+
+          // Make sure we don't exceed the array boundaries
           const subCollectionProducts = allProducts
-            .slice(subStartIdx, subEndIdx)
+            .slice(startIdx, Math.min(endIdx, allProducts.length))
             .map((product, index) => ({
               product: product._id,
               displayOrder: index,
             }));
 
-          // Create the sub-collection
+          // Create the sub-collection with products
           const subCollection = new Collection({
             ...subCollectionData,
             user: adminUser._id,
@@ -98,8 +93,11 @@ const importCollections = async () => {
             products: subCollectionProducts,
           });
 
-          await subCollection.save();
-          console.log(`Created sub-collection: ${subCollection.name}`.green);
+          const savedSubCollection = await subCollection.save();
+          console.log(
+            `Created sub-collection: ${savedSubCollection.name} with ${subCollectionProducts.length} products`
+              .green
+          );
         }
       }
     }

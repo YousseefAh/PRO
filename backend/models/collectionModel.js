@@ -19,6 +19,14 @@ const collectionSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    accessCode: {
+      type: String,
+      default: '',
+    },
+    requiresCode: {
+      type: Boolean,
+      default: false,
+    },
     products: [
       {
         product: {
