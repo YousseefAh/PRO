@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Form, Button, ListGroup, Row, Col, Table } from 'react-bootstrap';
-import { FaEdit, FaTrash, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { Form, Button, ListGroup, Row, Col, Table, InputGroup } from 'react-bootstrap';
+import { FaEdit, FaTrash, FaArrowUp, FaArrowDown, FaSearch } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import Message from '../../components/Message';
 import Loader from '../../components/Loader';
@@ -30,6 +30,7 @@ const CollectionEditScreen = () => {
     const [productOrders, setProductOrders] = useState([]);
     const [requiresCode, setRequiresCode] = useState(false);
     const [accessCode, setAccessCode] = useState('');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const {
         data: collection,
@@ -165,6 +166,16 @@ const CollectionEditScreen = () => {
             toast.error(err?.data?.message || err.error);
         }
     };
+
+    // Filter products based on search term
+    const filteredProducts = productsData?.products
+        ? productsData.products
+            .filter(product => !selectedProducts.includes(product._id))
+            .filter(product =>
+                product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                product.description.toLowerCase().includes(searchTerm.toLowerCase())
+            )
+        : [];
 
     return (
         <>
@@ -353,11 +364,34 @@ const CollectionEditScreen = () => {
                     )}
 
                     <h2>Add Products to Collection</h2>
+                    <Row className="mb-3">
+                        <Col>
+                            <InputGroup>
+                                <InputGroup.Text>
+                                    <FaSearch />
+                                </InputGroup.Text>
+                                <Form.Control
+                                    type="text"
+                                    placeholder="Search products by name or description..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                />
+                                {searchTerm && (
+                                    <Button
+                                        variant="outline-secondary"
+                                        onClick={() => setSearchTerm('')}
+                                    >
+                                        Clear
+                                    </Button>
+                                )}
+                            </InputGroup>
+                        </Col>
+                    </Row>
+
                     {productsData?.products ? (
-                        <ListGroup variant='flush'>
-                            {productsData.products
-                                .filter(product => !selectedProducts.includes(product._id))
-                                .map((product) => (
+                        filteredProducts.length > 0 ? (
+                            <ListGroup variant='flush'>
+                                {filteredProducts.map((product) => (
                                     <ListGroup.Item key={product._id}>
                                         <Row className='align-items-center'>
                                             <Col xs={2}>
@@ -368,7 +402,8 @@ const CollectionEditScreen = () => {
                                                 />
                                             </Col>
                                             <Col>
-                                                {product.name}
+                                                <div>{product.name}</div>
+                                                <small className="text-muted">{product.description.substring(0, 100)}...</small>
                                             </Col>
                                             <Col xs={3}>
                                                 <Button
@@ -381,7 +416,12 @@ const CollectionEditScreen = () => {
                                         </Row>
                                     </ListGroup.Item>
                                 ))}
-                        </ListGroup>
+                            </ListGroup>
+                        ) : searchTerm ? (
+                            <Message>No products match your search</Message>
+                        ) : (
+                            <Message>No products available to add</Message>
+                        )
                     ) : (
                         <Loader />
                     )}

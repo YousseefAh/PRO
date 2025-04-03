@@ -21,7 +21,9 @@ const ProfileScreen = () => {
     const [fitnessGoal, setFitnessGoal] = useState('');
     const [injuries, setInjuries] = useState('');
     const [additionalInfo, setAdditionalInfo] = useState('');
+    const [whatsAppPhoneNumber, setWhatsAppPhoneNumber] = useState('');
 
+    const dispatch = useDispatch();
     const { userInfo } = useSelector((state) => state.auth);
 
     const { data: orders, isLoading, error } = useGetMyOrdersQuery();
@@ -30,16 +32,18 @@ const ProfileScreen = () => {
         useProfileMutation();
 
     useEffect(() => {
-        setName(userInfo.name);
-        setEmail(userInfo.email);
-        // Set fitness profile data if available
-        if (userInfo.age) setAge(userInfo.age);
-        if (userInfo.fitnessGoal) setFitnessGoal(userInfo.fitnessGoal);
-        if (userInfo.injuries) setInjuries(userInfo.injuries);
-        if (userInfo.additionalInfo) setAdditionalInfo(userInfo.additionalInfo);
+        if (userInfo) {
+            setName(userInfo.name);
+            setEmail(userInfo.email);
+            // Set fitness profile data if available
+            setAge(userInfo.age || '');
+            setFitnessGoal(userInfo.fitnessGoal || '');
+            setInjuries(userInfo.injuries || '');
+            setAdditionalInfo(userInfo.additionalInfo || '');
+            setWhatsAppPhoneNumber(userInfo.whatsAppPhoneNumber || '');
+        }
     }, [userInfo]);
 
-    const dispatch = useDispatch();
     const submitHandler = async (e) => {
         e.preventDefault();
         if (password !== confirmPassword) {
@@ -55,8 +59,25 @@ const ProfileScreen = () => {
                     fitnessGoal,
                     injuries,
                     additionalInfo,
+                    whatsAppPhoneNumber,
                 }).unwrap();
+
+                // Update Redux state with the new user info
                 dispatch(setCredentials({ ...res }));
+
+                // Force a refresh of the local state to match Redux state
+                setName(res.name);
+                setEmail(res.email);
+                setAge(res.age || '');
+                setFitnessGoal(res.fitnessGoal || '');
+                setInjuries(res.injuries || '');
+                setAdditionalInfo(res.additionalInfo || '');
+                setWhatsAppPhoneNumber(res.whatsAppPhoneNumber || '');
+
+                // Clear passwords
+                setPassword('');
+                setConfirmPassword('');
+
                 toast.success('Profile updated successfully');
             } catch (err) {
                 toast.error(err?.data?.message || err.error);
@@ -69,14 +90,15 @@ const ProfileScreen = () => {
             <Col md={3}>
                 <h2>User Profile</h2>
 
-                <Card className="mb-4">
-                    <Card.Body>
-                        <Card.Title>Account Information</Card.Title>
-                        <Form onSubmit={submitHandler}>
+                <Form onSubmit={submitHandler}>
+                    <Card className="mb-4">
+                        <Card.Body>
+                            <Card.Title>Account Information</Card.Title>
+
                             <Form.Group className='my-2' controlId='name'>
                                 <Form.Label>Name</Form.Label>
                                 <Form.Control
-                                    type='name'
+                                    type='text'
                                     placeholder='Enter name'
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
@@ -112,14 +134,13 @@ const ProfileScreen = () => {
                                     onChange={(e) => setConfirmPassword(e.target.value)}
                                 ></Form.Control>
                             </Form.Group>
-                        </Form>
-                    </Card.Body>
-                </Card>
+                        </Card.Body>
+                    </Card>
 
-                <Card>
-                    <Card.Body>
-                        <Card.Title>Fitness Profile</Card.Title>
-                        <Form onSubmit={submitHandler}>
+                    <Card className="mb-4">
+                        <Card.Body>
+                            <Card.Title>Fitness Profile</Card.Title>
+
                             <Form.Group className='my-2' controlId='age'>
                                 <Form.Label>Age</Form.Label>
                                 <Form.Control
@@ -136,7 +157,7 @@ const ProfileScreen = () => {
                                     value={fitnessGoal}
                                     onChange={(e) => setFitnessGoal(e.target.value)}
                                 >
-                                    <option value=''>Select your goal</option>
+                                    <option value=''>Select a goal</option>
                                     <option value='gain weight'>Gain Weight</option>
                                     <option value='lose weight'>Lose Weight</option>
                                     <option value='build muscle'>Build Muscle</option>
@@ -146,12 +167,22 @@ const ProfileScreen = () => {
                                 </Form.Select>
                             </Form.Group>
 
+                            <Form.Group className='my-2' controlId='whatsAppPhoneNumber'>
+                                <Form.Label>WhatsApp Phone Number</Form.Label>
+                                <Form.Control
+                                    type='text'
+                                    placeholder='Enter your WhatsApp phone number'
+                                    value={whatsAppPhoneNumber}
+                                    onChange={(e) => setWhatsAppPhoneNumber(e.target.value)}
+                                ></Form.Control>
+                            </Form.Group>
+
                             <Form.Group className='my-2' controlId='injuries'>
-                                <Form.Label>Injuries / Past Injuries</Form.Label>
+                                <Form.Label>Injuries/Limitations</Form.Label>
                                 <Form.Control
                                     as='textarea'
                                     rows={3}
-                                    placeholder='List any current or past injuries'
+                                    placeholder='Any injuries or physical limitations?'
                                     value={injuries}
                                     onChange={(e) => setInjuries(e.target.value)}
                                 ></Form.Control>
@@ -162,19 +193,19 @@ const ProfileScreen = () => {
                                 <Form.Control
                                     as='textarea'
                                     rows={3}
-                                    placeholder='Any additional information'
+                                    placeholder='Any other information'
                                     value={additionalInfo}
                                     onChange={(e) => setAdditionalInfo(e.target.value)}
                                 ></Form.Control>
                             </Form.Group>
+                        </Card.Body>
+                    </Card>
 
-                            <Button type='submit' variant='primary' className='my-3'>
-                                Update
-                            </Button>
-                            {loadingUpdateProfile && <Loader />}
-                        </Form>
-                    </Card.Body>
-                </Card>
+                    <Button type='submit' variant='primary'>
+                        Update
+                    </Button>
+                    {loadingUpdateProfile && <Loader />}
+                </Form>
             </Col>
             <Col md={9}>
                 <h2>My Orders</h2>

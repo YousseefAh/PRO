@@ -22,6 +22,7 @@ const authUser = asyncHandler(async (req, res) => {
       fitnessGoal: user.fitnessGoal,
       injuries: user.injuries,
       additionalInfo: user.additionalInfo,
+      whatsAppPhoneNumber: user.whatsAppPhoneNumber,
     });
   } else {
     res.status(401);
@@ -33,8 +34,16 @@ const authUser = asyncHandler(async (req, res) => {
 // @route   POST /api/users
 // @access  Public
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, age, fitnessGoal, injuries, additionalInfo } =
-    req.body;
+  const {
+    name,
+    email,
+    password,
+    age,
+    fitnessGoal,
+    injuries,
+    additionalInfo,
+    whatsAppPhoneNumber,
+  } = req.body;
 
   const userExists = await User.findOne({ email });
 
@@ -51,6 +60,7 @@ const registerUser = asyncHandler(async (req, res) => {
     fitnessGoal: fitnessGoal || null,
     injuries: injuries || '',
     additionalInfo: additionalInfo || '',
+    whatsAppPhoneNumber: whatsAppPhoneNumber || '',
   });
 
   if (user) {
@@ -65,6 +75,7 @@ const registerUser = asyncHandler(async (req, res) => {
       fitnessGoal: user.fitnessGoal,
       injuries: user.injuries,
       additionalInfo: user.additionalInfo,
+      whatsAppPhoneNumber: user.whatsAppPhoneNumber,
     });
   } else {
     res.status(400);
@@ -96,6 +107,7 @@ const getUserProfile = asyncHandler(async (req, res) => {
       fitnessGoal: user.fitnessGoal,
       injuries: user.injuries,
       additionalInfo: user.additionalInfo,
+      whatsAppPhoneNumber: user.whatsAppPhoneNumber,
     });
   } else {
     res.status(404);
@@ -124,6 +136,8 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     if (req.body.injuries !== undefined) user.injuries = req.body.injuries;
     if (req.body.additionalInfo !== undefined)
       user.additionalInfo = req.body.additionalInfo;
+    if (req.body.whatsAppPhoneNumber !== undefined)
+      user.whatsAppPhoneNumber = req.body.whatsAppPhoneNumber;
 
     const updatedUser = await user.save();
 
@@ -136,6 +150,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
       fitnessGoal: updatedUser.fitnessGoal,
       injuries: updatedUser.injuries,
       additionalInfo: updatedUser.additionalInfo,
+      whatsAppPhoneNumber: updatedUser.whatsAppPhoneNumber,
     });
   } else {
     res.status(404);
@@ -183,6 +198,7 @@ const getUserById = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 });
+
 // @desc    Update user
 // @route   PUT /api/users/:id
 // @access  Private/Admin
@@ -194,6 +210,16 @@ const updateUser = asyncHandler(async (req, res) => {
     user.email = req.body.email || user.email;
     user.isAdmin = Boolean(req.body.isAdmin);
 
+    // Update fitness profile fields if provided
+    if (req.body.age !== undefined) user.age = req.body.age;
+    if (req.body.fitnessGoal !== undefined)
+      user.fitnessGoal = req.body.fitnessGoal;
+    if (req.body.injuries !== undefined) user.injuries = req.body.injuries;
+    if (req.body.additionalInfo !== undefined)
+      user.additionalInfo = req.body.additionalInfo;
+    if (req.body.whatsAppPhoneNumber !== undefined)
+      user.whatsAppPhoneNumber = req.body.whatsAppPhoneNumber;
+
     const updatedUser = await user.save();
 
     res.json({
@@ -201,6 +227,11 @@ const updateUser = asyncHandler(async (req, res) => {
       name: updatedUser.name,
       email: updatedUser.email,
       isAdmin: updatedUser.isAdmin,
+      age: updatedUser.age,
+      fitnessGoal: updatedUser.fitnessGoal,
+      injuries: updatedUser.injuries,
+      additionalInfo: updatedUser.additionalInfo,
+      whatsAppPhoneNumber: updatedUser.whatsAppPhoneNumber,
     });
   } else {
     res.status(404);
