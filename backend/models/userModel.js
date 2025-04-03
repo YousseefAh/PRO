@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 
 const userSchema = mongoose.Schema(
   {
+    // Account Information
     name: {
       type: String,
       required: true,
@@ -16,12 +17,17 @@ const userSchema = mongoose.Schema(
       type: String,
       required: true,
     },
+    whatsAppPhoneNumber: {
+      type: String,
+      default: '',
+    },
     isAdmin: {
       type: Boolean,
       required: true,
       default: false,
     },
-    // New user profile fields
+
+    // Fitness Profile Information
     age: {
       type: Number,
       default: null,
@@ -43,10 +49,6 @@ const userSchema = mongoose.Schema(
       default: '',
     },
     additionalInfo: {
-      type: String,
-      default: '',
-    },
-    whatsAppPhoneNumber: {
       type: String,
       default: '',
     },

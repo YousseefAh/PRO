@@ -115,6 +115,16 @@ const ProfileScreen = () => {
                                 ></Form.Control>
                             </Form.Group>
 
+                            <Form.Group className='my-2' controlId='whatsAppPhoneNumber'>
+                                <Form.Label>WhatsApp Phone Number</Form.Label>
+                                <Form.Control
+                                    type='text'
+                                    placeholder='Enter your WhatsApp phone number'
+                                    value={whatsAppPhoneNumber}
+                                    onChange={(e) => setWhatsAppPhoneNumber(e.target.value)}
+                                ></Form.Control>
+                            </Form.Group>
+
                             <Form.Group className='my-2' controlId='password'>
                                 <Form.Label>Password</Form.Label>
                                 <Form.Control
@@ -165,16 +175,6 @@ const ProfileScreen = () => {
                                     <option value='maintain'>Maintain</option>
                                     <option value='other'>Other</option>
                                 </Form.Select>
-                            </Form.Group>
-
-                            <Form.Group className='my-2' controlId='whatsAppPhoneNumber'>
-                                <Form.Label>WhatsApp Phone Number</Form.Label>
-                                <Form.Control
-                                    type='text'
-                                    placeholder='Enter your WhatsApp phone number'
-                                    value={whatsAppPhoneNumber}
-                                    onChange={(e) => setWhatsAppPhoneNumber(e.target.value)}
-                                ></Form.Control>
                             </Form.Group>
 
                             <Form.Group className='my-2' controlId='injuries'>
